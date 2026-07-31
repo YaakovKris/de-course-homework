@@ -23,7 +23,7 @@ def build_repo_activity(silver: pl.DataFrame) -> pl.DataFrame:
     repo_activity = (
         silver.group_by("repo_name")
         .agg(
-            pl.count().alias("event_count"),
+            pl.len().alias("event_count"),
             pl.col("event_type").n_unique().alias("distinct_event_types"),
         )
         .with_columns(
@@ -44,7 +44,7 @@ def build_activity_per_minute(silver: pl.DataFrame) -> pl.DataFrame:
             minute=pl.col("created_at").dt.truncate("1m")
         )
         .group_by("minute")
-        .agg(pl.count().alias("event_count"))
+        .agg(pl.len().alias("event_count"))
         .with_columns(pl.col("event_count").cast(pl.Int64))
         .sort("minute")
     )
@@ -60,7 +60,7 @@ def build_push_commits_by_repo(silver: pl.DataFrame) -> pl.DataFrame:
     push_commits = (
         push.group_by("repo_name")
         .agg(
-            pl.count().alias("push_events"),
+            pl.len().alias("push_events"),
             pl.col("commit_count").sum().alias("total_commits"),
         )
         .with_columns(
