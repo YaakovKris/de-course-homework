@@ -22,8 +22,6 @@ from . import config
 
 
 def build_bronze() -> pl.DataFrame:
-    """Read NDJSON, flatten nested structures, and write as Parquet."""
-    # Lazy read NDJSON with narrow schema
     df = (
         pl.scan_ndjson(config.LANDING_FILE, schema=config.LANDING_SCHEMA)
         .select(
@@ -48,9 +46,6 @@ def build_bronze() -> pl.DataFrame:
         .collect()
     )
 
-    # Create output directory if needed
     Path(config.BRONZE_FILE).parent.mkdir(parents=True, exist_ok=True)
-
-    # Write to Parquet and return
     df.write_parquet(config.BRONZE_FILE)
     return df
