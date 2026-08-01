@@ -12,8 +12,6 @@ TODO (Завдання 4, 5, 6): реалізуйте три функції ни
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import polars as pl
 
 from . import config
@@ -23,18 +21,16 @@ def build_repo_activity(silver: pl.DataFrame) -> pl.DataFrame:
     repo_activity = (
         silver.group_by("repo_name")
         .agg(
-            pl.len().alias("event_count"),
-            pl.col("event_type").n_unique().alias("distinct_event_types"),
-        )
-        .with_columns(
-            pl.col("event_count").cast(pl.Int64),
-            pl.col("distinct_event_types").cast(pl.Int64),
+            pl.len().cast(pl.Int64).alias("event_count"),
+            pl.col("event_type")
+            .n_unique()
+            .cast(pl.Int64)
+            .alias("distinct_event_types"),
         )
         .sort("event_count", descending=True)
     )
 
-    Path(config.GOLD_REPO_ACTIVITY).parent.mkdir(parents=True, exist_ok=True)
-    repo_activity.write_parquet(config.GOLD_REPO_ACTIVITY)
+    repo_activity.write_parquet(config.GOLD_REPO_ACTIVITY, mkdir=True)
     return repo_activity
 
 
@@ -44,31 +40,21 @@ def build_activity_per_minute(silver: pl.DataFrame) -> pl.DataFrame:
             minute=pl.col("created_at").dt.truncate("1m")
         )
         .group_by("minute")
-        .agg(pl.len().alias("event_count"))
-        .with_columns(pl.col("event_count").cast(pl.Int64))
+        .agg(pl.len().cast(pl.Int64).alias("event_count"))
         .sort("minute")
     )
 
-    Path(config.GOLD_ACTIVITY_PER_MINUTE).parent.mkdir(parents=True, exist_ok=True)
-    minutes.write_parquet(config.GOLD_ACTIVITY_PER_MINUTE)
+    minutes.write_parquet(config.GOLD_ACTIVITY_PER_MINUTE, mkdir=True)
     return minutes
 
 
 def build_push_commits_by_repo(silver: pl.DataFrame) -> pl.DataFrame:
     push = silver.filter(pl.col("event_type") == "PushEvent")
 
-    push_commits = (
-        push.group_by("repo_name")
-        .agg(
-            pl.len().alias("push_events"),
-            pl.col("commit_count").sum().alias("total_commits"),
-        )
-        .with_columns(
-            pl.col("push_events").cast(pl.Int64),
-            pl.col("total_commits").cast(pl.Int64),
-        )
+    push_commits = push.group_by("repo_name").agg(
+        pl.len().cast(pl.Int64).alias("push_events"),
+        pl.col("commit_count").sum().cast(pl.Int64).alias("total_commits"),
     )
 
-    Path(config.GOLD_PUSH_COMMITS).parent.mkdir(parents=True, exist_ok=True)
-    push_commits.write_parquet(config.GOLD_PUSH_COMMITS)
+    push_commits.write_parquet(config.GOLD_PUSH_COMMITS, mkdir=True)
     return push_commits

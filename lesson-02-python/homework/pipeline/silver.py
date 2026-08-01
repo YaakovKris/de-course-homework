@@ -37,8 +37,7 @@ def build_silver(bronze: pl.DataFrame) -> pl.DataFrame:
         .unique(subset=["event_id"], keep="first")
     )
 
-    Path(config.SILVER_FILE).parent.mkdir(parents=True, exist_ok=True)
-    silver.write_parquet(config.SILVER_FILE)
+    silver.write_parquet(config.SILVER_FILE, mkdir=True)
     return silver
 
 
