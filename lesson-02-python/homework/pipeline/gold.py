@@ -18,12 +18,43 @@ from . import config
 
 
 def build_repo_activity(silver: pl.DataFrame) -> pl.DataFrame:
-    raise NotImplementedError("Завдання 4: реалізуйте repo_activity згідно з CONTRACTS.md")
+    repo_activity = (
+        silver.group_by("repo_name")
+        .agg(
+            pl.len().cast(pl.Int64).alias("event_count"),
+            pl.col("event_type")
+            .n_unique()
+            .cast(pl.Int64)
+            .alias("distinct_event_types"),
+        )
+        .sort("event_count", descending=True)
+    )
+
+    repo_activity.write_parquet(config.GOLD_REPO_ACTIVITY, mkdir=True)
+    return repo_activity
 
 
 def build_activity_per_minute(silver: pl.DataFrame) -> pl.DataFrame:
-    raise NotImplementedError("Завдання 5: реалізуйте activity_per_minute згідно з CONTRACTS.md")
+    minutes = (
+        silver.with_columns(
+            minute=pl.col("created_at").dt.truncate("1m")
+        )
+        .group_by("minute")
+        .agg(pl.len().cast(pl.Int64).alias("event_count"))
+        .sort("minute")
+    )
+
+    minutes.write_parquet(config.GOLD_ACTIVITY_PER_MINUTE, mkdir=True)
+    return minutes
 
 
 def build_push_commits_by_repo(silver: pl.DataFrame) -> pl.DataFrame:
-    raise NotImplementedError("Завдання 6: реалізуйте push_commits_by_repo згідно з CONTRACTS.md")
+    push = silver.filter(pl.col("event_type") == "PushEvent")
+
+    push_commits = push.group_by("repo_name").agg(
+        pl.len().cast(pl.Int64).alias("push_events"),
+        pl.col("commit_count").sum().cast(pl.Int64).alias("total_commits"),
+    )
+
+    push_commits.write_parquet(config.GOLD_PUSH_COMMITS, mkdir=True)
+    return push_commits

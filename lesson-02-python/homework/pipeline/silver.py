@@ -1,12 +1,12 @@
 """Silver stage — clean, filter and de-duplicate the bronze events.
 
-TODO (Завдання 2 і 3): реалізуйте build_silver() і write_silver_partitioned().
+TODO (Завдання 2 і 3) : реалізуйте build_silver() і write_silver_partitioned().
 Контракт: див. CONTRACTS.md → "silver" і "silver partitioned".
 
 build_silver():
   * залиште тільки типи з config.TARGET_EVENT_TYPES
   * приберіть рядки з порожнім/відсутнім repo_name, відсутнім event_id чи created_at
-  * гарантуйте унікальність по event_id (.unique(subset=["event_id"]))
+  * гарантуйте унікальні сть по event_id (.unique(subset=["event_id"]))
   * запишіть у config.SILVER_FILE і поверніть DataFrame
 
 write_silver_partitioned():
@@ -17,14 +17,33 @@ write_silver_partitioned():
 
 from __future__ import annotations
 
+import shutil
+from pathlib import Path
+
 import polars as pl
 
 from . import config
 
 
 def build_silver(bronze: pl.DataFrame) -> pl.DataFrame:
-    raise NotImplementedError("Завдання 2: реалізуйте silver згідно з CONTRACTS.md")
+    silver = (
+        bronze.filter(
+            pl.col("event_type").is_in(config.TARGET_EVENT_TYPES)
+            & pl.col("repo_name").is_not_null()
+            & (pl.col("repo_name") != "")
+            & pl.col("event_id").is_not_null()
+            & pl.col("created_at").is_not_null()
+        )
+        .unique(subset=["event_id"], keep="first")
+    )
+
+    silver.write_parquet(config.SILVER_FILE, mkdir=True)
+    return silver
 
 
 def write_silver_partitioned(silver: pl.DataFrame) -> None:
-    raise NotImplementedError("Завдання 3: запишіть партиціонований silver за event_type")
+    output_dir = Path(config.SILVER_PARTITIONED_DIR)
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
+
+    silver.write_parquet(output_dir, partition_by="event_type")
