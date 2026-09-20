@@ -2,17 +2,13 @@
 # Запуск із цієї директорії (homework/):  uv run python producer.py
 import gzip
 import json
-import logging
 import urllib.request
 from typing import Iterator
 
-from confluent_kafka import KafkaError, Message, Producer
+from confluent_kafka import Producer
 from icecream import ic
 
 from transform import event_filter, flatten_event
-
-logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
-logger = logging.getLogger(__name__)
 
 # Дано, не редагувати.
 BOOTSTRAP_SERVERS = "localhost:9092"
@@ -47,17 +43,7 @@ def build_producer() -> Producer:
     BOOTSTRAP_SERVERS. Увімкніть idempotent producer (`enable.idempotence`) і
     `acks="all"`, щоб ретраї не створювали дублікатів.
     """
-    return Producer({
-        "bootstrap.servers": BOOTSTRAP_SERVERS,
-        "enable.idempotence": True,
-        "acks": "all",
-    })
-
-
-def _delivery_report(err: KafkaError | None, msg: Message) -> None:
-    """Async callback fired by poll()/flush() once a produce() is acked (or fails)."""
-    if err is not None:
-        logger.warning("delivery failed for key=%s: %s", msg.key(), err)
+    raise NotImplementedError("Реалізуйте build_producer")
 
 
 def run_producer() -> int:
@@ -72,27 +58,7 @@ def run_producer() -> int:
     5. Після кожного produce() викликайте producer.poll(0) (не блокуюче).
     6. Наприкінці producer.flush(30). Поверніть к-сть надісланих подій.
     """
-    producer = build_producer()
-    sent = 0
-    for event in iter_archive(ARCHIVE_URL, MAX_RAW):
-        if not event_filter(event):
-            continue
-        record = flatten_event(event)
-        key = record["repo_name"].encode("utf-8")
-        value = json.dumps(record).encode("utf-8")
-        while True:
-            try:
-                producer.produce(TOPIC, key=key, value=value, callback=_delivery_report)
-                break
-            except BufferError:
-                # Local queue full: drain delivery callbacks to free space, then retry.
-                producer.poll(0.1)
-        producer.poll(0)
-        sent += 1
-    pending = producer.flush(30)
-    if pending:
-        logger.warning("%d message(s) still undelivered after flush timeout", pending)
-    return sent
+    raise NotImplementedError("Реалізуйте run_producer")
 
 
 if __name__ == "__main__":
