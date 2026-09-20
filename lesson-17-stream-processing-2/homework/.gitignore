@@ -1,5 +1,3 @@
-data/output/
-data/checkpoints/
-__pycache__/
-.pytest_cache/
-*.crc
+fatal: ambiguous argument 'lesson17\homework_17;.gitignore': unknown revision or path not in the working tree.
+Use '--' to separate paths from revisions, like this:
+'git <command> [<revision>...] -- [<file>...]'
