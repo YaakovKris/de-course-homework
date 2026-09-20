@@ -1,23 +1,10 @@
-========================
-DuckDB SQL Результаты (3 дня backfill)
-========================
+$ docker compose exec airflow-scheduler python -c "
+import duckdb
+con = duckdb.connect('/opt/airflow/data/github_analytics.duckdb')
+print(con.execute('SELECT event_date, count(*) FROM raw.github_events_raw GROUP BY 1 ORDER BY 1').fetchdf())
+"
 
-SELECT event_date, count(*) as events, count(DISTINCT event_type) as event_types
-FROM raw.github_events_raw
-GROUP BY event_date
-ORDER BY event_date
-
-Результат:
-============
-2024-01-13: 149,691 events, 5 types
-2024-01-14: 172,340 events, 5 types  
-2024-01-15: 211,466 events, 5 types
-
-Всего событий: 533,497
-
-Event types (перечень всех типов):
-- PushEvent
-- PullRequestEvent
-- IssuesEvent
-- WatchEvent
-- IssueCommentEvent
+  event_date  count_star()
+0 2024-01-13        149691
+1 2024-01-14        172340
+2 2024-01-15        211466

@@ -23,7 +23,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
@@ -71,7 +71,11 @@ with DAG(
     start_date=datetime(2024, 1, 1, tzinfo=timezone.utc),
     catchup=False,
     tags=["github", "archive", "etl"],
-    default_args={"owner": "airflow"},
+    default_args={
+        "owner": "airflow",
+        "retries": 3,
+        "retry_delay": timedelta(minutes=5),
+    },
 ) as dag:
     check_availability = GHArchiveSensor(
         task_id="check_availability",

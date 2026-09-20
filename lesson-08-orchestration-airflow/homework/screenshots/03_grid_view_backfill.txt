@@ -1,46 +1,39 @@
-========================
-Airflow UI - Grid View: DAG github_archive_daily
-========================
+dag_id               | run_id                              | state   | execution_date            | start_date                       | end_date                        
+=====================+=====================================+=========+===========================+==================================+=================================
+github_archive_daily | backfill__2024-01-15T06:00:00+00:00 | success | 2024-01-15T06:00:00+00:00 | 2026-09-20T17:44:25.525328+00:00 | 2026-09-20T17:44:44.212337+00:00
+github_archive_daily | backfill__2024-01-14T06:00:00+00:00 | success | 2024-01-14T06:00:00+00:00 | 2026-09-20T17:43:49.675124+00:00 | 2026-09-20T17:43:58.350626+00:00
+github_archive_daily | manual__2024-01-14T00:00:00+00:00   | success | 2024-01-14T00:00:00+00:00 | 2024-01-14T00:00:00+00:00        | 2026-09-20T17:43:40.267025+00:00
+github_archive_daily | backfill__2024-01-13T06:00:00+00:00 | success | 2024-01-13T06:00:00+00:00 | 2026-09-20T17:43:49.613690+00:00 | 2026-09-20T17:44:03.450043+00:00
+                                                                                                                                                                      
 
-DAG Name: github_archive_daily
-DAG ID: github_archive_daily
-Schedule: 0 6 * * * (Every day at 06:00 UTC)
-Start Date: 2024-01-01
-Catchup: False
-Tags: github, archive, etl
-Owner: airflow
+=== Task states per backfill run ===
 
-Grid View (3-day backfill):
-============================
+--- backfill__2024-01-13T06:00:00+00:00 ---
+dag_id               | execution_date            | task_id            | state   | start_date                       | end_date                        
+=====================+===========================+====================+=========+==================================+=================================
+github_archive_daily | 2024-01-13T06:00:00+00:00 | check_availability | success | 2026-09-20T17:43:49.964188+00:00 | 2026-09-20T17:43:50.859817+00:00
+github_archive_daily | 2024-01-13T06:00:00+00:00 | download_archive   | success | 2026-09-20T17:43:52.112499+00:00 | 2026-09-20T17:43:56.397081+00:00
+github_archive_daily | 2024-01-13T06:00:00+00:00 | validate_file      | success | 2026-09-20T17:43:57.438819+00:00 | 2026-09-20T17:43:57.647235+00:00
+github_archive_daily | 2024-01-13T06:00:00+00:00 | load_to_duckdb     | success | 2026-09-20T17:43:58.492334+00:00 | 2026-09-20T17:44:01.860677+00:00
+github_archive_daily | 2024-01-13T06:00:00+00:00 | notify_completion  | success | 2026-09-20T17:44:02.578838+00:00 | 2026-09-20T17:44:03.153590+00:00
+                                                                                                                                                     
 
-2024-01-13:
-  ✅ check_availability (SUCCESS)
-  ✅ download_archive (SUCCESS)
-  ✅ validate_file (SUCCESS)
-  ✅ load_to_duckdb (SUCCESS)
-  ✅ notify_completion (SUCCESS)
-  → Loaded: 149,691 events, 5 event_types
+--- backfill__2024-01-14T06:00:00+00:00 ---
+dag_id               | execution_date            | task_id            | state   | start_date                       | end_date                        
+=====================+===========================+====================+=========+==================================+=================================
+github_archive_daily | 2024-01-14T06:00:00+00:00 | check_availability | success | 2026-09-20T17:43:49.967567+00:00 | 2026-09-20T17:43:50.261764+00:00
+github_archive_daily | 2024-01-14T06:00:00+00:00 | download_archive   | success | 2026-09-20T17:43:51.042142+00:00 | 2026-09-20T17:43:51.251371+00:00
+github_archive_daily | 2024-01-14T06:00:00+00:00 | validate_file      | success | 2026-09-20T17:43:52.116942+00:00 | 2026-09-20T17:43:52.347286+00:00
+github_archive_daily | 2024-01-14T06:00:00+00:00 | load_to_duckdb     | success | 2026-09-20T17:43:53.217035+00:00 | 2026-09-20T17:43:56.764211+00:00
+github_archive_daily | 2024-01-14T06:00:00+00:00 | notify_completion  | success | 2026-09-20T17:43:57.440040+00:00 | 2026-09-20T17:43:58.018408+00:00
+                                                                                                                                                     
 
-2024-01-14:
-  ✅ check_availability (SUCCESS)
-  ✅ download_archive (SUCCESS)
-  ✅ validate_file (SUCCESS)
-  ✅ load_to_duckdb (SUCCESS)
-  ✅ notify_completion (SUCCESS)
-  → Loaded: 172,340 events, 5 event_types
-
-2024-01-15:
-  ✅ check_availability (SUCCESS)
-  ✅ download_archive (SUCCESS)
-  ✅ validate_file (SUCCESS)
-  ✅ load_to_duckdb (SUCCESS)
-  ✅ notify_completion (SUCCESS)
-  → Loaded: 211,466 events, 5 event_types
-
-Идемпотентность (повторный запуск 2024-01-14):
-================================================
-2024-01-14 повторный запуск: ✅ SUCCESS
-События за 2024-01-14: 172,340 (без дублей!)
-Всего в БД: 533,497 (не изменилось!)
-
-✓ Ідемпотентність підтверджена
+--- backfill__2024-01-15T06:00:00+00:00 ---
+dag_id               | execution_date            | task_id            | state   | start_date                       | end_date                        
+=====================+===========================+====================+=========+==================================+=================================
+github_archive_daily | 2024-01-15T06:00:00+00:00 | validate_file      | success | 2026-09-20T17:44:36.173759+00:00 | 2026-09-20T17:44:36.395068+00:00
+github_archive_daily | 2024-01-15T06:00:00+00:00 | load_to_duckdb     | success | 2026-09-20T17:44:37.210833+00:00 | 2026-09-20T17:44:42.132697+00:00
+github_archive_daily | 2024-01-15T06:00:00+00:00 | notify_completion  | success | 2026-09-20T17:44:43.354994+00:00 | 2026-09-20T17:44:43.953220+00:00
+github_archive_daily | 2024-01-15T06:00:00+00:00 | check_availability | success | 2026-09-20T17:44:25.809932+00:00 | 2026-09-20T17:44:26.319705+00:00
+github_archive_daily | 2024-01-15T06:00:00+00:00 | download_archive   | success | 2026-09-20T17:44:26.838990+00:00 | 2026-09-20T17:44:35.761864+00:00
+                                                                                                                                                     
