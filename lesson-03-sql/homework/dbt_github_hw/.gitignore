@@ -1,0 +1,6 @@
+target/
+dbt_packages/
+logs/
+.user.yml
+warehouse.duckdb
+dbt_internal_packages/
