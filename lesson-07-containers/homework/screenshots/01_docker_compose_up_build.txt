@@ -1,0 +1,8 @@
+2026-09-20 16:36:07,570 INFO Downloading https://data.gharchive.org/2024-01-15-14.json.gz
+2026-09-20 16:36:17,467 INFO Downloaded 137.8 MB
+2026-09-20 16:36:17,467 INFO Connecting to Postgres at postgres:5432/gharchive
+2026-09-20 16:36:18,640 INFO Read 50000 lines, kept 40018
+2026-09-20 16:36:19,917 INFO Read 100000 lines, kept 79646
+2026-09-20 16:36:22,152 INFO Read 200000 lines, kept 158510
+2026-09-20 16:36:23,316 INFO Read 250000 lines, kept 197763
+2026-09-20 16:36:23,753 INFO Done. Loaded 211466 rows (table now has 211466).

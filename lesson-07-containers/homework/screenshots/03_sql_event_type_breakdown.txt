@@ -1,0 +1,9 @@
+    event_type     | count  
+-------------------+--------
+ PushEvent         | 165837
+ PullRequestEvent  |  18980
+ IssueCommentEvent |  12281
+ WatchEvent        |   9769
+ IssuesEvent       |   4599
+(5 rows)
+
