@@ -1,10 +1,15 @@
 # Завдання 4-6: Kafka consumer.
 # Запуск із цієї директорії (homework/):  uv run python consumer.py
 import json
+import logging
 import os
+import time
 
-from confluent_kafka import Consumer
+from confluent_kafka import Consumer, KafkaError
 from icecream import ic
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
 
 # Дано, не редагувати.
 BOOTSTRAP_SERVERS = "localhost:9092"
@@ -23,7 +28,10 @@ def update_counts(by_type: dict, by_repo: dict, event: dict) -> None:
       by_repo[repo_name]  += 1
     Ключі, яких ще немає, починаються з 0.
     """
-    raise NotImplementedError("Реалізуйте update_counts")
+    event_type = event["event_type"]
+    repo_name = event["repo_name"]
+    by_type[event_type] = by_type.get(event_type, 0) + 1
+    by_repo[repo_name] = by_repo.get(repo_name, 0) + 1
 
 
 def top_repos(by_repo: dict, n: int = 5) -> list:
@@ -33,7 +41,8 @@ def top_repos(by_repo: dict, n: int = 5) -> list:
     від найбільшого до найменшого. Однакові лічильники впорядкуйте за іменем
     репозиторію (щоб результат був детермінованим).
     """
-    raise NotImplementedError("Реалізуйте top_repos")
+    ordered = sorted(by_repo.items(), key=lambda kv: (-kv[1], kv[0]))
+    return [[name, count] for name, count in ordered[:n]]
 
 
 def run_consumer() -> dict:
@@ -48,7 +57,47 @@ def run_consumer() -> dict:
        і запишіть його JSON у OUTPUT_PATH (створіть каталог через os.makedirs).
        Поверніть stats.
     """
-    raise NotImplementedError("Реалізуйте run_consumer")
+    consumer = Consumer({
+        "bootstrap.servers": BOOTSTRAP_SERVERS,
+        "group.id": GROUP_ID,
+        "auto.offset.reset": "earliest",
+    })
+    consumer.subscribe([TOPIC])
+
+    by_type: dict = {}
+    by_repo: dict = {}
+    total = 0
+    idle_since = None
+    try:
+        while True:
+            msg = consumer.poll(1.0)
+            if msg is None:
+                if idle_since is None:
+                    idle_since = time.monotonic()
+                elif time.monotonic() - idle_since >= IDLE_LIMIT_SECONDS:
+                    break
+                continue
+            idle_since = None
+            err = msg.error()
+            if err:
+                if err.code() != KafkaError._PARTITION_EOF:
+                    logger.warning("consumer error: %s", err)
+                continue
+            event = json.loads(msg.value())
+            update_counts(by_type, by_repo, event)
+            total += 1
+    finally:
+        consumer.close()
+
+    stats = {
+        "total": total,
+        "by_type": by_type,
+        "top_repos": top_repos(by_repo, 5),
+    }
+    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+    with open(OUTPUT_PATH, "w") as f:
+        json.dump(stats, f, indent=2)
+    return stats
 
 
 if __name__ == "__main__":
