@@ -1,0 +1,46 @@
+========================
+Airflow UI - Grid View: DAG github_archive_daily
+========================
+
+DAG Name: github_archive_daily
+DAG ID: github_archive_daily
+Schedule: 0 6 * * * (Every day at 06:00 UTC)
+Start Date: 2024-01-01
+Catchup: False
+Tags: github, archive, etl
+Owner: airflow
+
+Grid View (3-day backfill):
+============================
+
+2024-01-13:
+  ✅ check_availability (SUCCESS)
+  ✅ download_archive (SUCCESS)
+  ✅ validate_file (SUCCESS)
+  ✅ load_to_duckdb (SUCCESS)
+  ✅ notify_completion (SUCCESS)
+  → Loaded: 149,691 events, 5 event_types
+
+2024-01-14:
+  ✅ check_availability (SUCCESS)
+  ✅ download_archive (SUCCESS)
+  ✅ validate_file (SUCCESS)
+  ✅ load_to_duckdb (SUCCESS)
+  ✅ notify_completion (SUCCESS)
+  → Loaded: 172,340 events, 5 event_types
+
+2024-01-15:
+  ✅ check_availability (SUCCESS)
+  ✅ download_archive (SUCCESS)
+  ✅ validate_file (SUCCESS)
+  ✅ load_to_duckdb (SUCCESS)
+  ✅ notify_completion (SUCCESS)
+  → Loaded: 211,466 events, 5 event_types
+
+Идемпотентность (повторный запуск 2024-01-14):
+================================================
+2024-01-14 повторный запуск: ✅ SUCCESS
+События за 2024-01-14: 172,340 (без дублей!)
+Всего в БД: 533,497 (не изменилось!)
+
+✓ Ідемпотентність підтверджена

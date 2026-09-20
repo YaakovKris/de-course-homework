@@ -1,0 +1,23 @@
+========================
+DuckDB SQL Результаты (3 дня backfill)
+========================
+
+SELECT event_date, count(*) as events, count(DISTINCT event_type) as event_types
+FROM raw.github_events_raw
+GROUP BY event_date
+ORDER BY event_date
+
+Результат:
+============
+2024-01-13: 149,691 events, 5 types
+2024-01-14: 172,340 events, 5 types  
+2024-01-15: 211,466 events, 5 types
+
+Всего событий: 533,497
+
+Event types (перечень всех типов):
+- PushEvent
+- PullRequestEvent
+- IssuesEvent
+- WatchEvent
+- IssueCommentEvent
