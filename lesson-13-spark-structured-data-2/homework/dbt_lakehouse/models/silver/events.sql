@@ -24,11 +24,21 @@ with source as (
       and id is not null
       and repo.name is not null
       and created_at is not null
+      {% if is_incremental() %}
+      -- фільтр застосовується ДО window-функції, а не після — інкрементальний
+      -- запуск ранжує лише нові рядки bronze, а не всю таблицю щоразу.
+      -- Безпечно: кожен event_id потрапляє в bronze рівно в одному інжест-батчі,
+      -- тож дедуп у межах нового зрізу не втрачає дублікатів зі старих запусків.
+      and _ingested_at > (
+          select coalesce(max(_ingested_at), cast('1970-01-01 00:00:00' as timestamp))
+          from {{ this }}
+      )
+      {% endif %}
 ),
 ranked as (
     select
         *,
-        row_number() over (partition by event_id order by _ingested_at desc) as rn
+        row_number() over (partition by event_id order by _ingested_at desc, _source_file desc) as rn
     from source
 )
 select
@@ -43,9 +53,3 @@ select
     _source_file
 from ranked
 where rn = 1
-{% if is_incremental() %}
-  and _ingested_at > (
-      select coalesce(max(_ingested_at), cast('1970-01-01 00:00:00' as timestamp))
-      from {{ this }}
-  )
-{% endif %}
