@@ -155,20 +155,44 @@
 - **Що перевіряє:** член `driver_key = 'unknown'` існує в `gold.dim_driver` РІВНО один раз,
   незалежно від кількості інкрементальних прогонів. `HAVING count(*) <> 1` над агрегатом без
   `GROUP BY` ловить і зникнення (0 рядків), і дублювання (2+ рядків).
-- **Як переконались, що він ловить помилку:** видалили рядок `'unknown'` з
+- **Як переконались, що він ловить помилку (псування даних):** видалили рядок `'unknown'` з
   `gold.dim_driver` вручну (`delete from gold.dim_driver where driver_key='unknown'`) і
   запустили тест окремо — `FAIL 1`, `Got 1 result, configured to fail if != 0`. Після
   повного перебудування Gold (`--full-refresh`) тест знову зелений.
+- **Як переконались, що він ловить помилку (зламана модель):** прибрали `union all`-блок
+  з членом `'unknown'` із самого `models/gold/dim_driver.sql` і перебудували модель
+  (`./dbt.sh build --select dim_driver assert_dim_driver_unknown_member_exists_once
+  --full-refresh`):
+  ```
+  Failure in test assert_dim_driver_unknown_member_exists_once (tests/assert_dim_driver_unknown_member_exists_once.sql)
+    Got 1 result, configured to fail if != 0
+  Done. PASS=4 WARN=0 ERROR=1 SKIP=0 NO-OP=0 TOTAL=5
+  ```
+  Повернули `union all`-блок і перебудували Gold (`--full-refresh`) — тест знову зелений
+  (`PASS=31 ... TOTAL=31` на повному `dbt build --selector gold`).
 
 - **Файл:** `dbt_rides/tests/assert_completed_ride_amounts_are_non_negative.sql`
 - **Що перевіряє:** для завершених поїздок `fare_amount`, `tolls_amount`, `tip_amount`,
   `total_amount`, `distance_km`, `wait_seconds`, `trip_seconds` ніколи не бувають
   від'ємними — ознака зламаного парсингу `payload` (переплутаний знак, не той JSON-шлях),
   а не легітимні дані джерела.
-- **Як переконались, що він ловить помилку:** навмисно зіпсували одну поїздку
+- **Як переконались, що він ловить помилку (псування даних):** навмисно зіпсували одну поїздку
   (`update gold.fact_ride set total_amount = -24.16 where ride_id='r-00307'`) і запустили
   тест окремо — `FAIL 1`, `Got 1 result, configured to fail if != 0`. Після
   `--full-refresh` (повернув правильне значення з Silver) тест знову зелений.
+- **Як переконались, що він ловить помилку (зламана модель):** у `models/silver/rides.sql`
+  навмисно переплутали знак при парсингу `total_amount` (`-1 * max((payload #>> '{fare,total}')
+  ::numeric(10,2)) filter (...)` замість `max(...)` без мінуса — саме той клас багу, що описаний
+  у коментарі тесту) і перебудували Silver+Gold (`./dbt.sh run --select rides fact_ride
+  --full-refresh`, потім `./dbt.sh test --select assert_completed_ride_amounts_are_non_negative`):
+  ```
+  Failure in test assert_completed_ride_amounts_are_non_negative (tests/assert_completed_ride_amounts_are_non_negative.sql)
+    Got 1008 results, configured to fail if != 0
+  Done. PASS=0 WARN=0 ERROR=1 SKIP=0 NO-OP=0 TOTAL=1
+  ```
+  (Усі 1008 завершених поїздок мають тепер від'ємний `total_amount` — зламаний парсинг ламає
+  модель цілком, не одну поїздку.) Повернули правильний вираз і перебудували все
+  (`./dbt.sh build --full-refresh`) — тест знову зелений (`PASS=63 ... TOTAL=63`).
 
 ## 4. Що зробили б далі
 
