@@ -4,4 +4,50 @@
 --   * один рядок на event_id (найраніший _ingested_at, за рівності — _source_file)
 --   * payload text -> jsonb; occurred_date = utc_date(occurred_at); _loaded_at = run_started_at
 
-{{ exceptions.raise_compiler_error("TODO: реалізуйте модель events (див. SPEC.md)") }}
+{{ config(materialized='incremental', unique_key='event_id', incremental_strategy='delete+insert') }}
+
+with source as (
+    select
+        event_id,
+        event_type,
+        ride_id,
+        source,
+        occurred_at,
+        payload::jsonb as payload,
+        _source_file,
+        _ingested_at
+    from {{ source('bronze', 'raw_events') }}
+    where source is distinct from 'loadtest'
+      and occurred_at is not null
+      and ride_id is not null
+      {% if is_incremental() %}
+      and _ingested_at > {{ high_watermark() }}
+      {% endif %}
+),
+
+-- У межах одного запуску лишаємо один рядок на event_id: найраніший _ingested_at,
+-- за рівності — _source_file. Дублікат, що приїхав у пізнішому запуску, замінить цей
+-- рядок цілком (delete+insert за unique_key) — вміст події однаковий в обох варіантах.
+deduped as (
+    select
+        *,
+        row_number() over (
+            partition by event_id
+            order by _ingested_at asc, _source_file asc
+        ) as rn
+    from source
+)
+
+select
+    event_id,
+    event_type,
+    ride_id,
+    source,
+    occurred_at,
+    {{ utc_date('occurred_at') }} as occurred_date,
+    payload,
+    _source_file,
+    _ingested_at,
+    '{{ run_started_at }}'::timestamptz as _loaded_at
+from deduped
+where rn = 1
